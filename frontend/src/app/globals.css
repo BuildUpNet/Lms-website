@@ -159,3 +159,26 @@ html {
   100% { transform: scale(1.6); opacity: 0;   }
 }
 
+.faculty-carousel-track {
+  display: flex;
+  width: max-content;
+  animation: faculty-carousel-scroll 36s linear infinite;
+}
+
+.faculty-carousel:hover .faculty-carousel-track,
+.faculty-carousel:focus-within .faculty-carousel-track {
+  animation-play-state: paused;
+}
+
+@keyframes faculty-carousel-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faculty-carousel-track {
+    animation: none;
+  }
+}
+

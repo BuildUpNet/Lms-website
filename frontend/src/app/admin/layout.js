@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useLogout } from "@/hooks/useLogout";
+import { FaArrowLeft } from "react-icons/fa6";
 
 const navItems = [
   {
@@ -40,17 +42,8 @@ const navItems = [
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const handleLogout = () => {
-    // Clear auth data
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    
-    // Redirect to login
-    router.push("/login");
-  };
+  const { loggingOut, handleLogout } = useLogout();
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
@@ -121,19 +114,13 @@ export default function AdminLayout({ children }) {
             href="/"
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/5 hover:text-white transition-all"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-            </svg>
+            <FaArrowLeft/>
             Back to Website
           </Link>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-all"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Logout
+            className=" w-full p-2 rounded-xl text-sm font-semibold text-red-300 bg-transparent hover:bg-[#C8102E] hover:text-white border border-red-500/20 hover:border-[#C8102E] transition-all duration-200 shadow-xs group cursor-pointer">
+            Logout Account
           </button>
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5">
             <div className="w-8 h-8 rounded-full bg-[#C8102E] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -183,13 +170,14 @@ export default function AdminLayout({ children }) {
               {/* Logout button */}
               <button 
                 onClick={handleLogout}
-                className="p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors" 
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-[#C8102E] hover:text-white border border-red-200/80 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer" 
                 aria-label="Logout"
-                title="Logout"
+                title="Logout of session"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
+                <span>Logout</span>
               </button>
 
               {/* Avatar */}

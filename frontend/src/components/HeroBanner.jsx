@@ -1,8 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import styles from "./HeroBanner.module.css";
 
 const slides = [
   { src: "/images/banner1.png", alt: "Lakshya IIT-JEE Coaching Banner" },
@@ -10,10 +10,9 @@ const slides = [
   { src: "/images/banner3.png", alt: "Lakshya Foundation Program Banner" },
 ];
 
-// Clone first slide at the end → enables seamless infinite loop
 const track = [...slides, slides[0]];
 
-const INTERVAL = 3500; // ms between auto-slides
+const INTERVAL = 3500; 
 
 const courses = [
   { label: "IIT-JEE Mains",   desc: "Class XI & XII",    href: "/courses", icon: "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" },
@@ -23,19 +22,16 @@ const courses = [
 ];
 
 export default function HeroBanner() {
-  // `index` tracks position in the extended track (0 … slides.length)
   const [index, setIndex]       = useState(0);
   const [animated, setAnimated] = useState(true);
   const timerRef                = useRef(null);
 
-  // The "real" dot/counter index (clamp clone back to 0)
   const current = index >= slides.length ? 0 : index;
 
-  // ── Auto-play — defined FIRST so everything below can reference it
+  // Auto-play
   const startTimer = useCallback(() => {
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
-      // Cap at slides.length (the clone) — never go beyond
       setIndex((i) => (i >= slides.length ? slides.length : i + 1));
     }, INTERVAL);
   }, []);
@@ -46,23 +42,20 @@ export default function HeroBanner() {
     return () => clearInterval(timerRef.current);
   }, [startTimer]);
 
-  // ── After sliding to the clone (index === slides.length),
-  //    stop the timer, then instantly snap back to real slide 0
   const handleTransitionEnd = useCallback(() => {
     if (index === slides.length) {
-      clearInterval(timerRef.current); // pause timer during snap
-      setAnimated(false);              // disable CSS transition
-      setIndex(0);                     // snap to real slide 0
+      clearInterval(timerRef.current); 
+      setAnimated(false);             
+      setIndex(0);                     
     }
   }, [index]);
 
-  // Re-enable transition + restart timer after the silent snap
   useEffect(() => {
     if (!animated) {
       const id = requestAnimationFrame(() =>
         requestAnimationFrame(() => {
           setAnimated(true);
-          startTimer(); // restart only after snap completes
+          startTimer(); 
         })
       );
       return () => cancelAnimationFrame(id);
@@ -89,11 +82,10 @@ export default function HeroBanner() {
   }, [startTimer]);
 
   return (
-    <section className="relative w-full bg-[#1a1a2e]" aria-label="Hero banner">
+    <section className="relative w-full bg-white" aria-label="Hero banner">
 
       <div className="relative w-full" style={{ aspectRatio: "16/5", minHeight: "200px" }}>
 
-        {/* ── Sliding image track (overflow-hidden scoped here only) ── */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent z-[1]" />
@@ -119,7 +111,6 @@ export default function HeroBanner() {
           </div>
         </div>
 
-        {/* ── UI overlays — outside the sliding track, design unchanged ── */}
 
         {/* Prev button */}
         <button onClick={prev} aria-label="Previous slide"
@@ -150,46 +141,21 @@ export default function HeroBanner() {
           {current + 1} / {slides.length}
         </div>
 
-        {/* Cards overlapping bottom of banner — desktop only (lg+) */}
-        <div className="hidden lg:block absolute bottom-0 left-0 right-0 z-10 translate-y-1/2 px-8">
-          <div className="max-w-5xl mx-auto grid grid-cols-4 gap-3">
-            {courses.map(({ label, desc, href, icon }) => (
-              <Link key={label} href={href}
-                className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3 shadow-lg hover:shadow-xl hover:-translate-y-1 hover:border-[#C8102E]/30 transition-all duration-200 group">
-                <span className="w-10 h-10 rounded-xl bg-[#C8102E]/10 group-hover:bg-[#C8102E] flex items-center justify-center flex-shrink-0 transition-colors duration-200">
-                  <svg className="w-5 h-5 text-[#C8102E] group-hover:text-white transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
-                  </svg>
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-[#1a1a2e] group-hover:text-[#C8102E] transition-colors leading-tight">{label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
       </div>
 
-      {/* Spacer for overlapping cards — desktop only */}
-      <div className="hidden lg:block pt-16" />
-
-      {/* Cards below banner — mobile only (< lg), horizontal scroll strip */}
-      <div className="lg:hidden bg-white px-3 py-3 shadow-md">
-        <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+      <div className="bg-white px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {courses.map(({ label, desc, href, icon }) => (
             <Link key={label} href={href}
-              className="flex-shrink-0 bg-white border border-gray-100 rounded-2xl px-3 py-2.5 flex items-center gap-2.5 shadow-sm hover:border-[#C8102E]/30 transition-all duration-200 group"
-              style={{ minWidth: "140px" }}>
-              <span className="w-9 h-9 rounded-xl bg-[#C8102E]/10 group-hover:bg-[#C8102E] flex items-center justify-center flex-shrink-0 transition-colors duration-200">
-                <svg className="w-4 h-4 text-[#C8102E] group-hover:text-white transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+              className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#C8102E]/30 hover:shadow-md">
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#C8102E]/10 transition-colors duration-200 group-hover:bg-[#C8102E]">
+                <svg className="h-5 w-5 text-[#C8102E] transition-colors duration-200 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
                 </svg>
               </span>
-              <div>
-                <p className="text-xs font-bold text-[#1a1a2e] group-hover:text-[#C8102E] transition-colors leading-tight">{label}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">{desc}</p>
+              <div className="min-w-0">
+                <p className="text-sm font-bold leading-tight text-[#1a1a2e] transition-colors group-hover:text-[#C8102E]">{label}</p>
+                <p className="mt-0.5 text-xs text-gray-500">{desc}</p>
               </div>
             </Link>
           ))}

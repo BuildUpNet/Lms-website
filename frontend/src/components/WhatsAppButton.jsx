@@ -1,9 +1,24 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 const WHATSAPP_NUMBER = "9198233-00034"; 
 const WHATSAPP_MESSAGE = "Hello! I'd like to know more about Lakshya's courses.";
 
 export default function WhatsAppButton() {
+  const pathname = usePathname();
+
+  // Only appear on public website, hide on admin dashboard, portals, and login
+  const isHidden =
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/student") ||
+    pathname?.startsWith("/teacher") ||
+    pathname?.startsWith("/staff") ||
+    pathname?.startsWith("/parent") ||
+    pathname === "/login";
+
+  if (isHidden) return null;
+
   const href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 
   return (

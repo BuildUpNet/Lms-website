@@ -10,50 +10,83 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const checkAuth = async () => {
       try {
-        // Check if token exists
-        const token = localStorage.getItem("token");
-        const userStr = localStorage.getItem("user");
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
 
-        if (!token || !userStr) {
-          // No token, redirect to login
-          router.push("/login");
+        // 1. Instant check: If neither token nor user exists in storage, immediately block and redirect
+        if (!token && !userStr) {
+          if (isMounted) {
+            setIsAuthorized(false);
+            setIsLoading(false);
+          }
+          router.replace("/login");
           return;
         }
 
-        const user = JSON.parse(userStr);
-
-        // Check if user role is allowed
-        if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-          // User doesn't have required role
-          console.error("Access denied: insufficient permissions");
-          router.push("/login");
-          return;
+        // 2. Pre-check role from storage
+        if (userStr && allowedRoles.length > 0) {
+          try {
+            const parsedUser = JSON.parse(userStr);
+            if (parsedUser?.role && !allowedRoles.includes(parsedUser.role)) {
+              if (isMounted) {
+                setIsAuthorized(false);
+                setIsLoading(false);
+              }
+              router.replace("/login");
+              return;
+            }
+          } catch {}
         }
 
-        // Verify token with backend
+        // 3. Verify session authenticity with backend
         const response = await authAPI.getMe();
 
-        if (response.success) {
+        if (!isMounted) return;
+
+        if (response && response.success && response.user) {
+          const user = response.user;
+          localStorage.setItem("user", JSON.stringify(user));
+
+          // Check server-verified role permissions
+          if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+            console.error("Access denied: insufficient permissions");
+            setIsAuthorized(false);
+            router.replace("/login");
+            return;
+          }
+
           setIsAuthorized(true);
         } else {
-          // Token invalid, clear and redirect
-          localStorage.removeItem("token");
+          // Token is invalid or expired
           localStorage.removeItem("user");
-          router.push("/login");
+          localStorage.removeItem("token");
+          setIsAuthorized(false);
+          router.replace("/login");
         }
       } catch (error) {
         console.error("Auth check failed:", error);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        router.push("/login");
+        if (isMounted) {
+          localStorage.removeItem("user");
+          localStorage.removeItem("token");
+          setIsAuthorized(false);
+          router.replace("/login");
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router, allowedRoles]);
 
   if (isLoading) {
@@ -68,7 +101,7 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
   }
 
   if (!isAuthorized) {
-    return null; 
+    return null;
   }
 
   return <>{children}</>;

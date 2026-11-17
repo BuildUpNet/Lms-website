@@ -1,13 +1,15 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const footerLinks = {
   "Quick Links": [
     { label: "Home", href: "/" },
-    { label: "About Us", href: "#about" },
-    { label: "Courses", href: "#courses" },
-    { label: "Faculty", href: "#faculty" },
-    { label: "Results", href: "#results" },
-    { label: "Contact Us", href: "#contact" },
+    { label: "About Us", href: "/about" },
+    { label: "Courses", href: "/courses" },
+    { label: "Results", href: "/results" },
+    { label: "Scholarship", href: "/scholarship" },
+    { label: "Gallery", href: "/gallery" },
+    { label: "Contact Us", href: "/contact" },
   ],
   Resources: [
     { label: "Study Material", href: "#" },
@@ -17,11 +19,10 @@ const footerLinks = {
     { label: "Test Series", href: "#" },
   ],
   Programs: [
-    { label: "IIT-JEE Mains & Advanced", href: "#courses" },
-    { label: "NEET (UG)", href: "#courses" },
-    { label: "Foundation (VIII–X)", href: "#courses" },
-    { label: "Crash Courses", href: "#courses" },
-    { label: "Online Batches", href: "#courses" },
+    { label: "IIT-JEE Mains & Advanced", href: "/results/iit-jee" },
+    { label: "NEET (UG)", href: "/results/neet" },
+    { label: "Foundation (VIII–X)", href: "/results/class-9-10" },
+    { label: "All Courses", href: "/courses" },
   ],
 };
 
@@ -49,11 +50,14 @@ export default function Footer() {
           <div className="space-y-4">
             {/* Logo */}
             <div>
-              <img
-                src="images/footer-logo.png"
+              <Image
+                src="/images/footer-logo.png"
                 alt="Lakshya — IIT-JEE / NEET / Foundation"
-                className="h-16 w-auto object-contain"
+                width={120}
+                height={40}
+                className=" object-contain"
               />
+  
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
               Empowering students since 2005 with focused IIT-JEE, NEET, and Foundation coaching.
@@ -65,7 +69,6 @@ export default function Footer() {
                 { label: "Facebook", path: "M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" },
                 { label: "YouTube", path: "M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z" },
                 { label: "Instagram", path: "M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37zm1.5-4.87h.01M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2z" },
-                { label: "Twitter/X", path: "M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" },
               ].map(({ label, path }) => (
                 <a
                   key={label}

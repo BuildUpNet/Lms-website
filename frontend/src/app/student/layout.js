@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import LogoutModal from "@/components/LogoutModal";
+import { useLogout } from "@/hooks/useLogout";
 import Icon from "@/components/Icon";
 import { icons } from "./icons";
 
@@ -30,15 +32,9 @@ function readUsername() {
 
 export default function StudentLayout({ children }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [username] = useState(readUsername);
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    router.push("/login");
-  };
+  const { loggingOut, handleLogout } = useLogout();
 
   const current = navItems.find((item) => pathname.startsWith(item.href));
   const initial = (username || "S").charAt(0).toUpperCase();
@@ -94,11 +90,16 @@ export default function StudentLayout({ children }) {
                 Back to Website
               </Link>
               <button
-                onClick={logout}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-all"
+                onClick={handleLogout}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-red-300 bg-red-950/40 hover:bg-[#C8102E] hover:text-white border border-red-500/20 hover:border-[#C8102E] transition-all duration-200 shadow-xs group cursor-pointer"
               >
-                <Icon d={icons.logout} />
-                Logout
+                <div className="flex items-center gap-2.5">
+                  <span className="w-6 h-6 rounded-lg bg-red-500/20 group-hover:bg-white/20 flex items-center justify-center text-red-400 group-hover:text-white transition-colors">
+                    <Icon d={icons.logout} />
+                  </span>
+                  <span>Logout Account</span>
+                </div>
+                <span className="text-[10px] text-red-400/80 group-hover:text-white/80 font-mono">Sign out →</span>
               </button>
               <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5">
                 <div className="w-8 h-8 rounded-full bg-[#C8102E] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -126,12 +127,13 @@ export default function StudentLayout({ children }) {
               <p className="text-sm font-semibold text-gray-700 lg:ml-0 ml-2">{current?.label ?? "Student Portal"}</p>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={logout}
-                  className="p-2 rounded-lg text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-[#C8102E] hover:text-white border border-red-200/80 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer"
                   aria-label="Logout"
-                  title="Logout"
+                  title="Logout of session"
                 >
                   <Icon d={icons.logout} />
+                  <span>Logout</span>
                 </button>
                 <div className="w-8 h-8 rounded-full bg-[#C8102E] flex items-center justify-center text-white text-xs font-bold">
                   {initial}
@@ -143,6 +145,7 @@ export default function StudentLayout({ children }) {
           <main className="flex-1 p-4 sm:p-6 overflow-auto">{children}</main>
         </div>
       </div>
+      <LogoutModal isOpen={loggingOut} />
     </ProtectedRoute>
   );
 }

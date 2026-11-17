@@ -15,16 +15,25 @@ const pool = mysql.createPool({
 });
 
 export const connectDB = async () => {
+    let connection;
     try {
-        const connection = await pool.getConnection();
+        connection = await pool.getConnection();
+
+        const [courseTables] = await connection.query(
+            `SELECT 1 FROM information_schema.tables
+             WHERE table_schema = DATABASE() AND table_name = 'courses'
+             LIMIT 1`
+        );
+        if (courseTables.length === 0) {
+            throw new Error("The courses table does not exist");
+        }
 
         console.log("MySQL connected successfully!");
-
-        connection.release();
-
     } catch (error) {
         console.error("MySQL connection failed:", error.message);
         process.exit(1);
+    } finally {
+        if (connection) connection.release();
     }
 };
 

@@ -43,7 +43,7 @@ export default function AdminDashboard() {
       {/* Welcome bar */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-extrabold text-[#1a1a2e]">Welcome back, Admin 👋</h1>
+          <h1 className="text-xl font-extrabold text-[#1a1a2e]">Welcome back, Admin</h1>
           <p className="text-sm text-gray-500 mt-0.5">Here's what's happening at Lakshya today.</p>
         </div>
         <span className="text-xs text-gray-400 bg-white border border-gray-200 px-3 py-1.5 rounded-full">

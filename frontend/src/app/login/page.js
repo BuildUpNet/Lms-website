@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authAPI } from "@/services/api";
 import Link from "next/link";
@@ -10,6 +10,31 @@ export default function LoginPage() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [logoutMessage, setLogoutMessage] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isLoggedOut =
+        sessionStorage.getItem("logout_success") === "true" ||
+        window.location.search.includes("logout=success");
+
+      if (isLoggedOut) {
+        setLogoutMessage(true);
+        sessionStorage.removeItem("logout_success");
+
+        if (window.history.replaceState && window.location.search.includes("logout=success")) {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("logout");
+          window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
+        }
+
+        const timer = setTimeout(() => {
+          setLogoutMessage(false);
+        }, 4000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,26 +45,28 @@ export default function LoginPage() {
       const data = await authAPI.login(form.username, form.password);
 
       if (data.success) {
-        // Store token and user info
-        localStorage.setItem("token", data.token);
+        // Store session data (cookie handled automatically by browser + token in storage)
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+        }
         localStorage.setItem("user", JSON.stringify(data.user));
 
         // Route based on role
         switch (data.user.role) {
           case "admin":
-            router.push("/admin");
+            router.replace("/admin");
             break;
           case "teacher":
-            router.push("/teacher/dashboard");
+            router.replace("/teacher/dashboard");
             break;
           case "student":
-            router.push("/student/dashboard");
+            router.replace("/student/dashboard");
             break;
           case "staff":
-            router.push("/staff/dashboard");
+            router.replace("/staff/dashboard");
             break;
           case "parent":
-            router.push("/parent/dashboard");
+            router.replace("/parent/dashboard");
             break;
           default:
             router.push("/");
@@ -56,9 +83,32 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] flex items-center justify-center p-4 relative">
+      {logoutMessage && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 max-w-md w-[92%] sm:w-auto bg-white border border-emerald-200 shadow-2xl rounded-2xl px-5 py-3.5 flex items-center justify-between gap-4 animate-in slide-in-from-top duration-300">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-white flex-shrink-0 shadow-sm">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900">Logout Successfully</p>
+              <p className="text-xs text-gray-500">You have been securely signed out.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setLogoutMessage(false)}
+            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg transition-colors cursor-pointer text-sm"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <div className="w-full max-w-md">
-        {/* Logo/Brand */}
+      
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-[#C8102E] flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

@@ -1,186 +1,119 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-const getAuthHeaders = () => {
+// Central fetch wrapper that always includes credentials for HTTP-only cookies
+const apiFetch = async (endpoint, options = {}) => {
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
+
+  const headers = {
+    ...(!isFormData && { 'Content-Type': 'application/json' }),
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...options.headers,
   };
+
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+    credentials: 'include', // Automatically passes & receives HTTP-only cookies
+  });
+
+  return res.json();
 };
 
 export const authAPI = {
-  login: async (username, password) => {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+  login: (username, password) =>
+    apiFetch('/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    return res.json();
-  },
-  getMe: async () => {
-    const res = await fetch(`${API_BASE}/auth/me`, { headers: getAuthHeaders() });
-    return res.json();
-  },
-  changePassword: async (currentPassword, newPassword) => {
-    const res = await fetch(`${API_BASE}/auth/change-password`, {
+      body: JSON.stringify({ username, password }),
+    }),
+  getMe: () => apiFetch('/auth/me'),
+  changePassword: (currentPassword, newPassword) =>
+    apiFetch('/auth/change-password', {
       method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ currentPassword, newPassword })
-    });
-    return res.json();
-  },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
   logout: async () => {
-    const res = await fetch(`${API_BASE}/auth/logout`, { method: 'POST', headers: getAuthHeaders() });
-    return res.json();
-  }
+    try {
+      return await apiFetch('/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.warn('Logout API error:', err);
+      return { success: true };
+    }
+  },
 };
 
 export const studentAPI = {
-  getAll: async () => {
-    const res = await fetch(`${API_BASE}/students`, { headers: getAuthHeaders() });
-    return res.json();
-  },
-  create: async (data) => {
-    const res = await fetch(`${API_BASE}/students`, {
+  getAll: () => apiFetch('/students'),
+  create: (data) =>
+    apiFetch('/students', {
       method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
-  },
-  update: async (id, data) => {
-    const res = await fetch(`${API_BASE}/students/${id}`, {
+      body: JSON.stringify(data),
+    }),
+  update: (id, data) =>
+    apiFetch(`/students/${id}`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
-  },
-  delete: async (id) => {
-    const res = await fetch(`${API_BASE}/students/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
-    return res.json();
-  }
+      body: JSON.stringify(data),
+    }),
+  delete: (id) => apiFetch(`/students/${id}`, { method: 'DELETE' }),
 };
 
 export const teacherAPI = {
-  getAll: async () => {
-    const res = await fetch(`${API_BASE}/teachers`, { headers: getAuthHeaders() });
-    return res.json();
-  },
-  create: async (data) => {
-    const res = await fetch(`${API_BASE}/teachers`, {
+  getAll: () => apiFetch('/teachers'),
+  create: (data) =>
+    apiFetch('/teachers', {
       method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
-  },
-  update: async (id, data) => {
-    const res = await fetch(`${API_BASE}/teachers/${id}`, {
+      body: JSON.stringify(data),
+    }),
+  update: (id, data) =>
+    apiFetch(`/teachers/${id}`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
-  },
-  delete: async (id) => {
-    const res = await fetch(`${API_BASE}/teachers/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
-    return res.json();
-  }
+      body: JSON.stringify(data),
+    }),
+  delete: (id) => apiFetch(`/teachers/${id}`, { method: 'DELETE' }),
 };
 
 export const staffAPI = {
-  getAll: async () => {
-    const res = await fetch(`${API_BASE}/staff`, { headers: getAuthHeaders() });
-    return res.json();
-  },
-  create: async (data) => {
-    const res = await fetch(`${API_BASE}/staff`, {
+  getAll: () => apiFetch('/staff'),
+  create: (data) =>
+    apiFetch('/staff', {
       method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
-  },
-  update: async (id, data) => {
-    const res = await fetch(`${API_BASE}/staff/${id}`, {
+      body: JSON.stringify(data),
+    }),
+  update: (id, data) =>
+    apiFetch(`/staff/${id}`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
-  },
-  delete: async (id) => {
-    const res = await fetch(`${API_BASE}/staff/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
-    return res.json();
-  }
+      body: JSON.stringify(data),
+    }),
+  delete: (id) => apiFetch(`/staff/${id}`, { method: 'DELETE' }),
 };
 
 export const courseAPI = {
-  getPublic: async () => {
-    const res = await fetch(`${API_BASE}/courses/public`);
-    return res.json();
-  },
-  getAll: async () => {
-    const res = await fetch(`${API_BASE}/courses`, { headers: getAuthHeaders() });
-    return res.json();
-  },
-  create: async (data) => {
-    const res = await fetch(`${API_BASE}/courses`, {
+  getPublic: () => apiFetch('/courses/public'),
+  getAll: () => apiFetch('/courses'),
+  create: (data) =>
+    apiFetch('/courses', {
       method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
-  },
-  update: async (id, data) => {
-    const res = await fetch(`${API_BASE}/courses/${id}`, {
+      body: JSON.stringify(data),
+    }),
+  update: (id, data) =>
+    apiFetch(`/courses/${id}`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return res.json();
-  },
-  delete: async (id) => {
-    const res = await fetch(`${API_BASE}/courses/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
-    return res.json();
-  }
-}
-console.log(API_BASE)
-export const galleryAPI = {
-  
-  // Public 
-  getAll: async () => {
-    const res = await fetch(`${API_BASE}/gallery`);
-    return res.json();
-  },
+      body: JSON.stringify(data),
+    }),
+  delete: (id) => apiFetch(`/courses/${id}`, { method: 'DELETE' }),
+};
 
-  upload: async (formData) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const res = await fetch(`${API_BASE}/gallery`, {
+export const galleryAPI = {
+  getAll: () => apiFetch('/gallery'),
+  upload: (formData) =>
+    apiFetch('/gallery', {
       method: 'POST',
-      headers: { ...(token && { 'Authorization': `Bearer ${token}` }) },
       body: formData,
-    });
-    return res.json();
-  },
-  // Admin — delete by id
-  delete: async (id) => {
-    const res = await fetch(`${API_BASE}/gallery/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-    return res.json();
-  },
+    }),
+  delete: (id) => apiFetch(`/gallery/${id}`, { method: 'DELETE' }),
 };
 
 export const studentPortalAPI = {
-  getProfile: async () => {
-    const res = await fetch(`${API_BASE}/student-portal/profile`, { headers: getAuthHeaders() });
-    return res.json();
-  },
-  getCourses: async () => {
-    const res = await fetch(`${API_BASE}/student-portal/courses`, { headers: getAuthHeaders() });
-    return res.json();
-  }
+  getProfile: () => apiFetch('/student-portal/profile'),
+  getCourses: () => apiFetch('/student-portal/courses'),
 };

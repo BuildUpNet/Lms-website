@@ -13,13 +13,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport = {
+  themeColor: "#C8102E",
+};
+
 export const metadata = {
   title: "Lakshya — IIT-JEE | NEET | Foundation",
   description:
     "Lakshya is India's premier coaching institute for IIT-JEE, NEET, and Foundation courses. Expert faculty, proven results, and a student-first approach.",
   keywords: "IIT JEE coaching, NEET preparation, Foundation courses, Lakshya, competitive exam, online classes",
   authors: [{ name: "Lakshya Institute" }],
-  themeColor: "#C8102E",
   openGraph: {
     title: "Lakshya — IIT-JEE | NEET | Foundation",
     description:

@@ -31,7 +31,6 @@ export const login = async (req, res) => {
     const user = users[0];
     
     // Check password
-    // PHP's password_hash() creates "$2y$" hashes; node bcrypt only accepts "$2a$"/"$2b$"
     const storedHash = String(user.password).replace(/^\$2y\$/, '$2b$');
     const isPasswordValid = await bcrypt.compare(password, storedHash);
 
@@ -53,6 +52,15 @@ export const login = async (req, res) => {
       { expiresIn: '24h' }
     );
     
+    // Set HTTP-only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/'
+    });
+
     // Return success
     res.status(200).json({
       success: true,
@@ -75,7 +83,7 @@ export const login = async (req, res) => {
   }
 };
 
-// Get current user info (from token)
+// Get current user info 
 export const getMe = async (req, res) => {
   try {
     const user_id = req.user.user_id;
@@ -212,10 +220,27 @@ export const changePassword = async (req, res) => {
   }
 };
 
-// Logout (client-side token removal, but endpoint for consistency)
 export const logout = (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Logout successful'
-  });
+  try {
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      path: '/'
+    });
+    res.clearCookie('jwt', { httpOnly: true, path: '/' });
+    res.clearCookie('sessionId', { httpOnly: true, path: '/' });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Logout successful'
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error during logout',
+      error: error.message
+    });
+  }
 };

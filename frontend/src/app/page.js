@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HeroBanner from "@/components/HeroBanner";
+import CourseCard from "@/components/CourseCard";
+import { fallbackCourses } from "@/data/publicCourses";
 import { courseAPI } from "@/services/api";
 
 /* ─── Data ────────────────────────────────────────────────────── */
@@ -47,8 +50,6 @@ const categories = [
   },
 ];
 
-const courses = [];
-
 const whyUs = [
   {
     icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z",
@@ -88,32 +89,28 @@ const faculty = [
     subject: "Physics — IIT-JEE & NEET",
     exp: "18 years",
     qual: "IIT Delhi, Ph.D.",
-    initials: "RS",
-    color: "from-[#C8102E] to-red-700",
+    image: "/images/faculty1.png",
   },
   {
     name: "Prof. Anil Kumar",
     subject: "Mathematics — IIT-JEE",
     exp: "15 years",
     qual: "IIT Bombay, M.Tech",
-    initials: "AK",
-    color: "from-[#1a1a2e] to-blue-800",
+    image: "/images/faculty2.png",
   },
   {
     name: "Dr. Priya Verma",
     subject: "Biology — NEET",
     exp: "12 years",
     qual: "AIIMS Delhi, MBBS",
-    initials: "PV",
-    color: "from-green-600 to-green-800",
+    image: "/images/faculty3.png",
   },
   {
     name: "Mr. Suresh Gupta",
     subject: "Chemistry — IIT-JEE & NEET",
     exp: "14 years",
     qual: "IIT Kanpur, M.Sc.",
-    initials: "SG",
-    color: "from-[#F5C518] to-yellow-600",
+    image: "/images/faculty4.png",
   },
 ];
 
@@ -125,14 +122,13 @@ const stats = [
   { value: "5+", label: "City Branches", icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z" },
 ];
 
-/* ─── Star Rating ────────────────────────────────────────────── */
 function StarRating({ rating }) {
   return (
     <div className="flex items-center gap-0.5" aria-label={`Rating: ${rating} out of 5`}>
-      {[1, 2, 3, 4, 5].map((s) => (
+      {[1, 2, 3, 4, 5].map((star) => (
         <svg
-          key={s}
-          className={`w-3.5 h-3.5 ${s <= Math.floor(rating) ? "text-[#F5C518]" : "text-gray-300"}`}
+          key={star}
+          className={`w-3.5 h-3.5 ${star <= Math.floor(rating) ? "text-[#F5C518]" : "text-gray-300"}`}
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -144,15 +140,60 @@ function StarRating({ rating }) {
   );
 }
 
+const courseRoadmaps = {
+  "iit-jee": {
+    name: "IIT-JEE (Mains & Adv)",
+    steps: [
+      { step: "01", title: "Concept Mastery", desc: "Core Class 11-12 fundamentals & derivations with senior IITian faculty." },
+      { step: "02", title: "Daily DPP Drills", desc: "40+ multi-concept problem sets daily with same-day 1-on-1 doubt clearing." },
+      { step: "03", title: "All-India CBT Series", desc: "Proctored full-syllabus mocks on exact NTA test screen interface." },
+      { step: "04", title: "Rank Booster Sprints", desc: "Last 15 years PYQ mastery & AI-driven error elimination for top AIR." },
+    ]
+  },
+  "neet": {
+    name: "NEET (UG Medical)",
+    steps: [
+      { step: "01", title: "NCERT Line-by-Line", desc: "Complete NCERT Biology retention with daily diagram and labeling tests." },
+      { step: "02", title: "Timed MCQ Practice", desc: "60–90 daily MCQs mastering Assertion-Reason & numerical shortcuts." },
+      { step: "03", title: "720-Mark OMR Mocks", desc: "Full 200-min exam rehearsals with OMR bubbling speed management." },
+      { step: "04", title: "Negative Score Control", desc: "Targeted error clinics and high-frequency revisions to cross 680+." },
+    ]
+  },
+  "foundation": {
+    name: "Class 9–10 Foundation",
+    steps: [
+      { step: "01", title: "Mental Ability & Basics", desc: "Strengthening logical reasoning, math aptitude, and school syllabus." },
+      { step: "02", title: "Olympiad Thinking", desc: "Tackling non-routine higher-order thinking (HOTS) questions for NSO/IMO." },
+      { step: "03", title: "Board Writing Mastery", desc: "Step-wise descriptive answer writing to guarantee 98%+ in board exams." },
+      { step: "04", title: "Pre-Boards & Class 11 Primer", desc: "Full-length mock board rehearsals and early transition to senior concepts." },
+    ]
+  },
+  "droppers": {
+    name: "Repeater / Dropper",
+    steps: [
+      { step: "01", title: "360° Flaw Diagnostic", desc: "Identifying past attempt weak spots and rapid foundation reset." },
+      { step: "02", title: "100+ Daily Sprints", desc: "High-intensity multi-chapter problem solving and zero backlog." },
+      { step: "03", title: "Weekly National CBTs", desc: "Twice-weekly full mocks tracking strike rate and percentile growth." },
+      { step: "04", title: "Rank Turnaround", desc: "Final 60-day scoring chapters sprint to secure a top national rank." },
+    ]
+  }
+};
+
 /* ─── Page ───── */
 export default function Home() {
   const [courses, setCourses] = useState([]);
   const [coursesLoading, setCoursesLoading] = useState(true);
+  const [selectedTrack, setSelectedTrack] = useState("iit-jee");
 
   useEffect(() => {
     courseAPI.getPublic()
-      .then((data) => { if (data.success) setCourses(data.data.filter((c) => c.status === "active")); })
-      .catch(() => {})
+      .then((data) => {
+        const activeCourses = data.success && Array.isArray(data.data)
+          ? data.data.filter((course) => course.status === "active")
+          : [];
+        setCourses(activeCourses.length > 0 ? activeCourses : fallbackCourses);
+      })
+      .catch(() => setCourses(fallbackCourses))
       .finally(() => setCoursesLoading(false));
   }, []);
 
@@ -199,54 +240,69 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── 4. FEATURE BANNERS ──────────────────────────────── */}
-        <section className="py-10 bg-[#f7f8fc]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-6">
-            {/* Banner 1 — red */}
-            <div className="bg-gradient-to-r from-[#C8102E] to-red-700 rounded-3xl p-8 flex items-center gap-6 overflow-hidden relative">
-              <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/10" />
-              <div className="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-white/5" />
-              <div className="flex-shrink-0 w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-                </svg>
-              </div>
-              <div className="relative z-10">
-                <h3 className="text-xl font-extrabold text-white leading-snug">
-                  Transform Your<br />Path to IIT &amp; NEET
-                </h3>
-                <p className="text-red-100 text-sm mt-1 mb-3">
-                  Structured learning that gets results.
-                </p>
-                <Link href="#courses" className="inline-block bg-white text-[#C8102E] text-xs font-bold px-4 py-2 rounded-full hover:bg-red-50 transition-colors">
-                  View Programs →
-                </Link>
-              </div>
-            </div>
+        {/* ── 4. COMPACT COURSE ROADMAP ──────────────────────────────── */}
+        {(() => {
+          const currentRoadmap = courseRoadmaps[selectedTrack] || courseRoadmaps["iit-jee"];
+          return (
+            <section className="py-10 bg-[#f7f8fc] border-y border-gray-100">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Compact Header */}
+                <div className="text-center mb-6">
+                  <p className="text-[#C8102E] font-bold text-xs uppercase tracking-widest mb-1">
+                    Roadmap
+                  </p>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1a1a2e]">
+                    4-Step Preparation Roadmap
+                  </h2>
+                  <p className="text-gray-500 text-xs sm:text-sm mt-1 max-w-lg mx-auto">
+                    Select your target course to view the step-by-step path to success.
+                  </p>
+                </div>
 
-            {/* Banner 2 — yellow/navy */}
-            <div className="bg-gradient-to-r from-[#1a1a2e] to-[#16213e] rounded-3xl p-8 flex items-center gap-6 overflow-hidden relative">
-              <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-[#F5C518]/10" />
-              <div className="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-[#F5C518]/5" />
-              <div className="flex-shrink-0 w-16 h-16 bg-[#F5C518]/20 rounded-2xl flex items-center justify-center">
-                <svg className="w-9 h-9 text-[#F5C518]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-                </svg>
+                {/* Course Selection Pills */}
+                <div className="flex flex-wrap justify-center gap-2 mb-6">
+                  {Object.entries(courseRoadmaps).map(([key, val]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setSelectedTrack(key)}
+                      className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                        selectedTrack === key
+                          ? "bg-[#C8102E] text-white shadow-sm"
+                          : "bg-white text-gray-700 border border-gray-200 hover:border-[#C8102E] hover:text-[#C8102E]"
+                      }`}
+                    >
+                      {val.name}
+                    </button>
+                  ))}
+                </div>
+
+                {/* 4 Minimal Step Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  {currentRoadmap.steps.map((st) => (
+                    <div
+                      key={st.step}
+                      className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-[#C8102E]/30 transition-all flex flex-col justify-between"
+                    >
+                      <div>
+                        <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-red-50 text-[#C8102E] inline-block mb-2.5">
+                          Step {st.step}
+                        </span>
+                        <h3 className="font-extrabold text-[#1a1a2e] text-sm">
+                          {st.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                          {st.desc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
               </div>
-              <div className="relative z-10">
-                <h3 className="text-xl font-extrabold text-white leading-snug">
-                  Redefine the Way<br />You Learn &amp; Excel
-                </h3>
-                <p className="text-gray-400 text-sm mt-1 mb-3">
-                  AI-powered analytics. Expert mentoring.
-                </p>
-                <Link href="#courses" className="inline-block bg-[#F5C518] text-[#1a1a2e] text-xs font-bold px-4 py-2 rounded-full hover:bg-yellow-400 transition-colors">
-                  Start Learning →
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
+          );
+        })()}
 
         {/* ── 5. POPULAR COURSES ──────────────────────────────── */}
         <section id="courses" className="py-20 bg-white">
@@ -278,49 +334,10 @@ export default function Home() {
               </div>
             ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.slice(0, 6).map((c, i) => {
-                const gradients = ["from-red-400 to-[#C8102E]", "from-green-400 to-green-600", "from-blue-400 to-blue-600", "from-purple-400 to-purple-600", "from-teal-400 to-teal-600", "from-orange-400 to-orange-600"];
+              {courses.slice(0, 3).map((c) => {
                 const bookIcon = "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253";
                 return (
-                <article key={c.id}
-                  className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm card-hover group">
-                  <div className={`h-40 bg-gradient-to-br ${gradients[i % gradients.length]} flex items-center justify-center relative overflow-hidden`}>
-                    <div className="absolute top-0 right-0 w-28 h-28 rounded-full bg-white/10 translate-x-8 -translate-y-8" />
-                    <svg className="w-16 h-16 text-white opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d={bookIcon} />
-                    </svg>
-                    <span className="absolute top-3 left-3 px-2.5 py-1 text-xs font-bold rounded-full bg-white/20 text-white backdrop-blur-sm">
-                      Active
-                    </span>
-                    {c.duration && (
-                      <span className="absolute bottom-3 right-3 px-2.5 py-1 text-xs font-semibold bg-black/30 text-white rounded-full backdrop-blur-sm">
-                        {c.duration}
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-5">
-                    <h3 className="font-bold text-[#1a1a2e] text-base leading-snug mb-1 group-hover:text-[#C8102E] transition-colors">
-                      {c.course_name}
-                    </h3>
-                    {c.description && (
-                      <p className="text-xs text-gray-500 leading-relaxed mb-3 line-clamp-2">{c.description}</p>
-                    )}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                      {c.duration && (
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          {c.duration}
-                        </div>
-                      )}
-                      <Link href="/contact"
-                        className="px-4 py-1.5 bg-[#C8102E] text-white text-xs font-bold rounded-full hover:bg-[#a50d25] transition-colors">
-                        Enroll Now
-                      </Link>
-                    </div>
-                  </div>
-                </article>
+                  <CourseCard key={c.id} course={c} />
                 );
               })}
             </div>
@@ -394,32 +411,50 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {faculty.map(({ name, subject, exp, qual, initials, color }) => (
-                <div
-                  key={name}
-                  className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm card-hover text-center group"
-                >
-                  {/* Avatar */}
-                  <div className={`h-36 bg-gradient-to-br ${color} flex items-center justify-center relative`}>
-                    <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-3xl font-extrabold text-white shadow-inner">
-                      {initials}
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-white rounded-t-3xl" />
+            <div
+              className="faculty-carousel overflow-hidden py-2"
+              role="region"
+              aria-roledescription="carousel"
+              aria-label="Meet Our Faculty"
+              tabIndex={0}
+            >
+              <div className="faculty-carousel-track">
+                {[0, 1].map((copy) => (
+                  <div
+                    key={`faculty-set-${copy}`}
+                    className="flex shrink-0 items-stretch gap-6 pr-6"
+                    aria-hidden={copy === 1}
+                  >
+                    {faculty.map(({ name, subject, exp, qual, image }) => (
+                      <div
+                        key={`${name}-${copy}`}
+                        className="w-72 max-w-[82vw] shrink-0 bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm card-hover text-center group"
+                      >
+                        <div className="relative h-44 overflow-hidden bg-gray-100">
+                          <Image
+                            src={image}
+                            alt={name}
+                            fill
+                            sizes="(min-width: 1024px) 280px, 82vw"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="px-5 pb-6 pt-4">
+                          <h3 className="font-bold text-[#1a1a2e] text-base">{name}</h3>
+                          <p className="text-xs text-[#C8102E] font-semibold mt-0.5">{subject}</p>
+                          <p className="text-xs text-gray-500 mt-1">{qual}</p>
+                          <div className="mt-3 inline-flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full text-xs text-gray-600 font-medium">
+                            <svg className="w-3 h-3 text-[#C8102E]" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                            </svg>
+                            {exp} Experience
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="px-5 pb-6 pt-0">
-                    <h3 className="font-bold text-[#1a1a2e] text-base mt-1">{name}</h3>
-                    <p className="text-xs text-[#C8102E] font-semibold mt-0.5">{subject}</p>
-                    <p className="text-xs text-gray-500 mt-1">{qual}</p>
-                    <div className="mt-3 inline-flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full text-xs text-gray-600 font-medium">
-                      <svg className="w-3 h-3 text-[#C8102E]" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                      </svg>
-                      {exp} Experience
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -499,7 +534,6 @@ export default function Home() {
                 },
               ].map(({ name, rank, quote, initials, color }) => (
                 <div key={name} className="bg-white rounded-2xl p-6 shadow-sm card-hover border border-gray-100 relative">
-                  {/* Quote icon */}
                   <svg className="w-8 h-8 text-[#C8102E]/15 absolute top-4 right-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
                   </svg>
@@ -512,7 +546,7 @@ export default function Home() {
                       <p className="text-xs text-[#C8102E] font-semibold">{rank}</p>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 leading-relaxed italic">"{quote}"</p>
+                  <p className="text-sm text-gray-600 leading-relaxed italic">&ldquo;{quote}&rdquo;</p>
                   <div className="mt-3">
                     <StarRating rating={5} />
                   </div>

@@ -2,7 +2,7 @@ import db from '../config/db.js';
 
 export const getCourses = async (req, res) => {
   try {
-    const [courses] = await db.query(`SELECT * FROM courses ORDER BY created_at DESC`);
+    const [courses] = await db.query('SELECT * FROM courses');
     res.status(200).json({ success: true, data: courses });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -38,7 +38,9 @@ export const updateCourse = async (req, res) => {
     }
 
     await db.query(
-      `UPDATE courses SET course_name=?, description=?, duration=?, status=? WHERE id=?`,
+      `UPDATE courses
+       SET course_name=?, description=?, duration=?, status=?
+       WHERE id=?`,
       [course_name, description, duration, status, id]
     );
 

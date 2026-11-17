@@ -132,7 +132,7 @@ export default function CoursesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-[#f7f8fc] border-b border-gray-100">
-                  {["#", "Course Name", "Description", "Duration", "Status", "Created At", "Actions"].map((h) => (
+                  {["ID", "Course Name", "Description", "Duration", "Status", "Created At", "Actions"].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>

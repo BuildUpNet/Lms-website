@@ -6,9 +6,30 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
+// Ensure gallery table exists
+let tableChecked = false;
+const ensureGalleryTable = async () => {
+  if (tableChecked) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS gallery (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        category VARCHAR(100) DEFAULT 'General',
+        image_url VARCHAR(500) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+    tableChecked = true;
+  } catch (err) {
+    console.error("Failed to ensure gallery table:", err);
+  }
+};
+
 // GET /api/gallery  — public
 export const getGallery = async (req, res) => {
   try {
+    await ensureGalleryTable();
     const [rows] = await pool.query(
       "SELECT * FROM gallery ORDER BY created_at DESC"
     );
@@ -22,6 +43,7 @@ export const getGallery = async (req, res) => {
 // POST /api/gallery  — admin, multipart/form-data
 export const uploadImage = async (req, res) => {
   try {
+    await ensureGalleryTable();
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file uploaded" });
     }

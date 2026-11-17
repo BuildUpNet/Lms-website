@@ -5,7 +5,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
 import authRoutes    from "./routes/authRoutes.js";
-import studentRoutes from "./routes/studentRoutes.js";
 import teacherRoutes from "./routes/teacherRoutes.js";
 import staffRoutes   from "./routes/staffRoutes.js";
 import courseRoutes  from "./routes/courseRoutes.js";
@@ -26,12 +25,27 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Parse cookies into req.cookies
+app.use((req, res, next) => {
+    req.cookies = {};
+    const cookieHeader = req.headers.cookie;
+    if (cookieHeader) {
+        cookieHeader.split(";").forEach((cookie) => {
+            const [name, ...rest] = cookie.split("=");
+            if (name) {
+                req.cookies[name.trim()] = decodeURIComponent(rest.join("="));
+            }
+        });
+    }
+    next();
+});
+
 // Serve uploaded images statically
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API Routes
 app.use("/api/auth",    authRoutes);
-app.use("/api/students", studentRoutes);
+//app.use("/api/students", studentRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/staff",   staffRoutes);
 app.use("/api/courses", courseRoutes);
