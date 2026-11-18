@@ -56,6 +56,14 @@ const navLinks = [
   { label: "About Us", href: "/about" },
 ];
 
+const dashboardPaths = {
+  admin: "/admin",
+  teacher: "/teacher/dashboard",
+  student: "/student/dashboard",
+  staff: "/staff/dashboard",
+  parent: "/parent/dashboard",
+};
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [resultsHover, setResultsHover] = useState(false);
@@ -64,6 +72,7 @@ export default function Navbar() {
   const [mobileScholarshipOpen, setMobileScholarshipOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const { loggingOut, handleLogout } = useLogout();
+  const dashboardHref = dashboardPaths[currentUser?.role] || "/login";
 
   useEffect(() => {
     try {
@@ -260,7 +269,7 @@ export default function Navbar() {
             {currentUser ? (
               <div className="flex items-center gap-2">
                 <Link
-                  href={currentUser.role === "admin" ? "/admin" : "/student/dashboard"}
+                  href={dashboardHref}
                   className="px-4 py-2.5 text-xs font-bold text-white bg-[#1a1a2e] hover:bg-[#C8102E] rounded-xl transition-all duration-200 shadow-md flex items-center gap-1.5"
                 >
                   <svg className="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -453,7 +462,7 @@ export default function Navbar() {
               {currentUser ? (
                 <div className="flex flex-col gap-2">
                   <Link
-                    href={currentUser.role === "admin" ? "/admin" : "/student/dashboard"}
+                    href={dashboardHref}
                     className="block text-center py-2.5 text-sm font-bold text-white bg-[#1a1a2e] rounded-full hover:bg-[#C8102E] transition-all"
                     onClick={() => setMenuOpen(false)}
                   >

@@ -66,13 +66,13 @@ export default function Footer() {
             {/* Social icons */}
             <div className="flex gap-3 pt-2">
               {[
-                { label: "Facebook", path: "M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" },
-                { label: "YouTube", path: "M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z" },
-                { label: "Instagram", path: "M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37zm1.5-4.87h.01M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2z" },
-              ].map(({ label, path }) => (
+                { label: "Instagram", path: "M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37zm1.5-4.87h.01M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2z", href: "https://www.instagram.com/lakshya.sangrur?dmpr=Y2N2YTh3bW9jOTly" },
+              ].map(({ label, path, href }) => (
                 <a
                   key={label}
-                  href="#"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={label}
                   className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-[#C8102E] transition-colors"
                 >
@@ -132,7 +132,7 @@ export default function Footer() {
             },
           ].map((item, idx) => (
             <div key={idx} className="flex items-start gap-3">
-              {/* Icon Wrapper (clickable if iconHref is provided) */}
+              {/* Icon Wrapper */}
               {item.iconHref ? (
                 <a
                   href={item.iconHref}
