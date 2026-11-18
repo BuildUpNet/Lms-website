@@ -14,12 +14,28 @@ const track = [...slides, slides[0]];
 
 const INTERVAL = 3500; 
 
-const courses = [
+const courseIcons = [
   { label: "IIT-JEE Mains",   desc: "Class XI & XII",    href: "/courses", icon: "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" },
   { label: "IIT-JEE Advanced", desc: "Top Engineering",   href: "/courses", icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" },
   { label: "NEET (UG)",        desc: "Medical Entrance",  href: "/courses", icon: "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" },
   { label: "Foundation",       desc: "Class VIII – X",    href: "/courses", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
-];
+].map(({ icon }) => icon);
+
+const courses = [
+  "Topic-wise Tests",
+  "Regular Homework",
+  "Topic-wise Videos",
+  "Subjective Tests",
+  "Important Questions",
+  "Mock Tests",
+  "Career Guidance",
+  "Live Classes",
+  "Doubt Solving",
+].map((label, index) => ({
+  label,
+  href: "/courses",
+  icon: courseIcons[index % courseIcons.length],
+}));
 
 export default function HeroBanner() {
   const [index, setIndex]       = useState(0);
@@ -143,22 +159,31 @@ export default function HeroBanner() {
 
       </div>
 
-      <div className="bg-white px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-          {courses.map(({ label, desc, href, icon }) => (
-            <Link key={label} href={href}
-              className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#C8102E]/30 hover:shadow-md">
-              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#C8102E]/10 transition-colors duration-200 group-hover:bg-[#C8102E]">
-                <svg className="h-5 w-5 text-[#C8102E] transition-colors duration-200 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
-                </svg>
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-bold leading-tight text-[#1a1a2e] transition-colors group-hover:text-[#C8102E]">{label}</p>
-                <p className="mt-0.5 text-xs text-gray-500">{desc}</p>
+      <div className="hero-course-ticker" role="region" aria-label="Course categories">
+        <div className="hero-course-ticker-viewport">
+          <div className="hero-course-ticker-track">
+            {[false, true].map((isDuplicate) => (
+              <div
+                key={isDuplicate ? "duplicate" : "original"}
+                className="hero-course-ticker-group"
+                aria-hidden={isDuplicate || undefined}
+              >
+                {courses.map(({ label, href, icon }) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    className="hero-course-ticker-item"
+                    tabIndex={isDuplicate ? -1 : undefined}
+                  >
+                    <svg className="hero-course-ticker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
+                    </svg>
+                    <span className="hero-course-ticker-label">{label}</span>
+                  </Link>
+                ))}
               </div>
-            </Link>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
