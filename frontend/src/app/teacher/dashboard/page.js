@@ -595,6 +595,7 @@ function DocumentsView() {
           </table>
         </div>
       </Card>
+      <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-xs leading-relaxed text-blue-800">For changes to your personnel documents, contact the HR Help Desk. Documents and downloads shown here are sample UI data.</div>
     </div>
   );
 }
