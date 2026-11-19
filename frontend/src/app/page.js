@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
@@ -121,6 +121,57 @@ const stats = [
   { value: "2,500+", label: "NEET Qualifiers", icon: "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" },
   { value: "5+", label: "City Branches", icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z" },
 ];
+
+function AnimatedStatValue({ value }) {
+  const [count, setCount] = useState(0);
+  const elementRef = useRef(null);
+  const target = Number(value.replace(/[^\d]/g, ""));
+  const suffix = value.replace(/[\d,]/g, "");
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+
+    let animationFrame;
+    let observer;
+    const startCounting = () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setCount(target);
+        return;
+      }
+
+      const duration = 1600;
+      let startTime;
+      const animate = (timestamp) => {
+        if (startTime === undefined) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        const easedProgress = 1 - (1 - progress) ** 3;
+        setCount(Math.floor(target * easedProgress));
+        if (progress < 1) animationFrame = requestAnimationFrame(animate);
+      };
+      animationFrame = requestAnimationFrame(animate);
+    };
+
+    if ("IntersectionObserver" in window) {
+      observer = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          observer.disconnect();
+          startCounting();
+        }
+      }, { threshold: 0.35 });
+      observer.observe(element);
+    } else {
+      startCounting();
+    }
+
+    return () => {
+      observer?.disconnect();
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [target]);
+
+  return <span ref={elementRef}>{count.toLocaleString("en-US")}{suffix}</span>;
+}
 
 function StarRating({ rating }) {
   return (
@@ -486,7 +537,7 @@ export default function Home() {
                       <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
                     </svg>
                   </div>
-                  <p className="text-3xl font-extrabold text-[#F5C518] leading-none">{value}</p>
+                  <p className="text-3xl font-extrabold text-[#F5C518] leading-none"><AnimatedStatValue value={value} /></p>
                   <p className="text-xs text-gray-400 mt-2 font-medium leading-tight">{label}</p>
                 </div>
               ))}

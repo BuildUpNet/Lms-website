@@ -7,7 +7,6 @@ const PHONE_NUMBER = "tel:+919823300034";
 export default function FloatingCallButton() {
   const pathname = usePathname();
 
-  // Only appear on public website, hide on admin dashboard, portals, and login
   const isHidden =
     pathname?.startsWith("/admin") ||
     pathname?.startsWith("/student") ||
@@ -92,7 +91,6 @@ export default function FloatingCallButton() {
         aria-label="Call Lakshya Institute (+91 98233-00034)"
         className="call-float-btn group"
       >
-        {/* Pulse ring animation */}
         <span className="call-pulse" aria-hidden="true" />
 
         {/* Hover Tooltip */}

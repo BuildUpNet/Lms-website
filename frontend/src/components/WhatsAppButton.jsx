@@ -7,8 +7,7 @@ const WHATSAPP_MESSAGE = "Hello! I'd like to know more about Lakshya's courses."
 
 export default function WhatsAppButton() {
   const pathname = usePathname();
-
-  // Only appear on public website, hide on admin dashboard, portals, and login
+  
   const isHidden =
     pathname?.startsWith("/admin") ||
     pathname?.startsWith("/student") ||

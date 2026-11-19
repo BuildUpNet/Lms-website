@@ -22,8 +22,6 @@ const dateKey = (d) =>
 
 const toMap = (list, key, value) => Object.fromEntries(list.map((item) => [item[key], item[value]]));
 
-// records: [{ date: "YYYY-MM-DD", status }], holidays: [{ date, title }],
-// notes: { "YYYY-MM-DD": "tooltip text" } for summary views such as admin.
 export default function AttendanceCalendar({
   title = "Attendance Calendar",
   records = NO_ITEMS,

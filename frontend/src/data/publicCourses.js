@@ -1,8 +1,8 @@
 export const fallbackCourses = [
   {
-    id: "fallback-neet-self-paced",
-    course_name: "NEET Online Self-Paced Batch",
-    description: "Study at your own pace with 800+ recorded lectures, unlimited test attempts, and live doubt sessions.",
+    id: "fallback-neet-preparation",
+    course_name: "NEET Preparation Batch",
+    description: "Structured preparation for the NEET examination with focused subject learning and regular practice.",
     duration: "10 Month",
     status: "active",
   },
@@ -16,7 +16,7 @@ export const fallbackCourses = [
   {
     id: "fallback-jee",
     course_name: "IIT-JEE Complete Course",
-    description: "Comprehensive Physics, Chemistry, and Maths coverage with live classes, DPPs, and full test series.",
+    description: "Comprehensive Physics, Chemistry, and Mathematics coverage with guided problem practice and a full test series.",
     duration: "12 Months",
     status: "active",
   },

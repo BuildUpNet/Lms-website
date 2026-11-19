@@ -16,8 +16,6 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
       try {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
         const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
-
-        // 1. Instant check: If neither token nor user exists in storage, immediately block and redirect
         if (!token && !userStr) {
           if (isMounted) {
             setIsAuthorized(false);

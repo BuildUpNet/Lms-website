@@ -37,7 +37,6 @@ function getCourseDetails(course) {
     highlights.push("Focused preparation for NEET");
   }
   if (name.includes("crash")) highlights.push("Focused revision and exam practice");
-  if (name.includes("self-paced")) highlights.push("Study at your own pace");
   if (course.duration) highlights.push(`Course duration: ${course.duration}`);
   if (highlights.length === 0) highlights.push("Program details available from our counsellors");
 
@@ -83,7 +82,7 @@ export default function CourseCard({ course }) {
           <p className="text-2xl font-black text-[#1a1a2e]">{discountedFee}</p>
         </div>
         <Link
-          href="/contact"
+          href={`/courses/${encodeURIComponent(course.id)}`}
           className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-xl bg-[#C8102E] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#a50d25]"
         >
           Know more
