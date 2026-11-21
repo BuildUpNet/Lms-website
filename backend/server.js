@@ -7,8 +7,10 @@ import { connectDB } from "./config/db.js";
 import authRoutes    from "./routes/authRoutes.js";
 import teacherRoutes from "./routes/teacherRoutes.js";
 import staffRoutes   from "./routes/staffRoutes.js";
+import studentRoutes from "./routes/studentRoutes.js";
 import courseRoutes  from "./routes/courseRoutes.js";
 import galleryRoutes from "./routes/galleryRoutes.js";
+import heroBannerRoutes from "./routes/heroBannerRoutes.js";
 import studentPortalRoutes from "./routes/studentPortalRoutes.js";
 
 dotenv.config();
@@ -45,11 +47,12 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API Routes
 app.use("/api/auth",    authRoutes);
-//app.use("/api/students", studentRoutes);
+app.use("/api/students", studentRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/staff",   staffRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/gallery", galleryRoutes);
+app.use("/api/hero-banners", heroBannerRoutes);
 app.use("/api/student-portal", studentPortalRoutes);
 
 app.get("/", (req, res) => {

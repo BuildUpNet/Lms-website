@@ -18,6 +18,7 @@ const navItems = [
   { label: "Class Schedule", href: "/student/schedule", icon: icons.calendar },
   { label: "Recorded Lectures", href: "/student/lectures", icon: icons.video },
   { label: "Attendance", href: "/student/attendance", icon: icons.clipboardCheck },
+  { label: "Results", href: "/student/results", icon: icons.document },
   { label: "My Profile", href: "/student/profile", icon: icons.user },
 ];
 

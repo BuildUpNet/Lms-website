@@ -113,6 +113,27 @@ export const galleryAPI = {
   delete: (id) => apiFetch(`/gallery/${id}`, { method: 'DELETE' }),
 };
 
+export const heroBannerAPI = {
+  getActive: () => apiFetch('/hero-banners'),
+  getAll: () => apiFetch('/hero-banners/admin'),
+  upload: (formData) =>
+    apiFetch('/hero-banners', {
+      method: 'POST',
+      body: formData,
+    }),
+  setActive: (id, active) =>
+    apiFetch(`/hero-banners/${id}/active`, {
+      method: 'PATCH',
+      body: JSON.stringify({ active }),
+    }),
+  setDisplayOrder: (id, displayOrder) =>
+    apiFetch(`/hero-banners/${id}/order`, {
+      method: 'PATCH',
+      body: JSON.stringify({ display_order: displayOrder }),
+    }),
+  delete: (id) => apiFetch(`/hero-banners/${id}`, { method: 'DELETE' }),
+};
+
 export const studentPortalAPI = {
   getProfile: () => apiFetch('/student-portal/profile'),
   getCourses: () => apiFetch('/student-portal/courses'),

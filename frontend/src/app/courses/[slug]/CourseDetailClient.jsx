@@ -13,7 +13,7 @@ function getCourseType(name = "") {
     return {
       label: "Foundation",
       summary: "Build strong academic fundamentals and develop the confidence to take on what comes next.",
-      subjects: ["Mathematics", "Science", "Problem solving"],
+      subjects: ["Concept clarity", "Study habits", "Exam confidence"],
       heroLead: "Build the fundamentals that make every next topic easier.",
       heroExplanation: "Strong foundations grow when students connect school concepts, practice reasoning, and revisit ideas that need more attention.",
       panelTitle: "A confident start begins with strong basics.",
@@ -27,7 +27,7 @@ function getCourseType(name = "") {
     return {
       label: "Medical entrance",
       summary: "Prepare for the NEET journey with a clear study structure and focused subject practice.",
-      subjects: ["Physics", "Chemistry", "Biology"],
+      subjects: ["NCERT mastery", "Concept application", "Timed practice"],
       heroLead: "Prepare across Biology, Physics, and Chemistry with purpose.",
       heroExplanation: "NEET preparation combines detailed subject knowledge with the ability to recall, interpret, and apply concepts. Clear revision goals and review of practice can keep preparation focused.",
       panelTitle: "Make every subject part of one balanced plan.",
@@ -41,7 +41,7 @@ function getCourseType(name = "") {
     return {
       label: "Engineering entrance",
       summary: "Strengthen core concepts and build the problem-solving skills needed for JEE preparation.",
-      subjects: ["Physics", "Chemistry", "Mathematics"],
+      subjects: ["Concept mastery", "Advanced problem solving", "Test analysis"],
       heroLead: "Turn strong concepts into confident problem-solving.",
       heroExplanation: "JEE questions often ask students to connect ideas and reason through multiple steps. Build the habit of understanding a concept, choosing an approach, and learning from each practice attempt.",
       panelTitle: "Build understanding that carries into problem solving.",
@@ -54,7 +54,7 @@ function getCourseType(name = "") {
   return {
     label: "Academic program",
     summary: "A structured learning program designed to help you make steady progress toward your goals.",
-    subjects: ["Concept learning", "Guided practice", "Progress review"],
+    subjects: ["Clear objectives", "Regular practice", "Progress review"],
     heroLead: "Build a steady learning routine around your goals.",
     heroExplanation: "Make progress by understanding key concepts, applying them through practice, and reviewing the topics that need another look.",
     panelTitle: "Keep learning purposeful and manageable.",
@@ -248,7 +248,7 @@ export default function CourseDetailClient({ slug }) {
     ? [
         {
           question: "What subjects does this course cover?",
-          answer: `The main focus areas are ${type.subjects.join(", ")}. Contact our team for a detailed topic-wise syllabus.`,
+          answer: `The key learning areas are ${type.subjects.join(", ")}. Contact our team for a detailed topic-wise syllabus.`,
         },
         {
           question: isFoundation
@@ -385,11 +385,11 @@ export default function CourseDetailClient({ slug }) {
                     </p>
                     <div className="mt-7 h-px bg-white/15" />
                     <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-white/50">
-                      Focus areas
+                      Key learning areas
                     </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-4 flex flex-nowrap gap-1.5">
                       {type.subjects.map((subject) => (
-                        <span key={subject} className="rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white/85">
+                        <span key={subject} className="min-w-0 flex-1 whitespace-nowrap rounded-lg bg-white/10 px-1.5 py-2 text-center text-[11px] font-medium text-white/85 sm:px-2 sm:text-xs">
                           {subject}
                         </span>
                       ))}

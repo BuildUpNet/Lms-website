@@ -1,16 +1,36 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-
-const slides = [
-  { src: "/images/banner1.png", alt: "Lakshya IIT-JEE Coaching Banner" },
-  { src: "/images/banner2.png", alt: "Lakshya NEET Coaching Banner" },
-];
-
-const track = [...slides, slides[0]];
+/* eslint-disable @next/next/no-img-element */
+import { useState, useEffect } from "react";
+import { heroBannerAPI } from "@/services/api";
 
 const INTERVAL = 10000;
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/api\/?$/, "");
+
+function orderBannersForDisplay(banners) {
+  const uploadedOrder = [...banners].sort((a, b) => Number(a.id) - Number(b.id));
+  const positions = Array(uploadedOrder.length).fill(null);
+  const automatic = [];
+
+  uploadedOrder.forEach((banner) => {
+    const displayOrder = Number(banner.display_order) || 0;
+    if (displayOrder === 0) {
+      automatic.push(banner);
+      return;
+    }
+
+    let position = Math.min(displayOrder - 1, positions.length - 1);
+    while (position < positions.length && positions[position]) position += 1;
+    if (position === positions.length) position = positions.lastIndexOf(null);
+    if (position >= 0) positions[position] = banner;
+  });
+
+  let automaticIndex = 0;
+  for (let position = 0; position < positions.length; position += 1) {
+    if (!positions[position]) positions[position] = automatic[automaticIndex++];
+  }
+  return positions.filter(Boolean);
+}
 
 const courseIcons = [
   { label: "IIT-JEE Mains",   desc: "Class XI & XII",    icon: "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" },
@@ -35,119 +55,104 @@ const courses = [
 }));
 
 export default function HeroBanner() {
-  const [index, setIndex]       = useState(0);
-  const [animated, setAnimated] = useState(true);
-  const timerRef                = useRef(null);
+  const [slides, setSlides] = useState([]);
+  const [index, setIndex] = useState(0);
 
-  const current = index >= slides.length ? 0 : index;
+  useEffect(() => {
+    let active = true;
+    const fetchHeroBanners = async () => {
+      try {
+        const response = await heroBannerAPI.getActive();
+        if (!response.success || !Array.isArray(response.data)) {
+          throw new Error(response.message || "Invalid hero banner response");
+        }
 
-  // Auto-play
-  const startTimer = useCallback(() => {
-    clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setIndex((i) => (i >= slides.length ? slides.length : i + 1));
-    }, INTERVAL);
+        const banners = orderBannersForDisplay(response.data)
+          .map((image) => ({
+            src: /^https?:\/\//i.test(image.image_url)
+              ? image.image_url
+              : `${API_BASE}${image.image_url}`,
+            alt: image.title || "Lakshya banner",
+          }));
+
+        if (active) {
+          setSlides(banners);
+          setIndex(0);
+        }
+      } catch (error) {
+        console.error("Failed to load hero banners:", error);
+      }
+    };
+
+    fetchHeroBanners();
+    return () => { active = false; };
   }, []);
 
-  // Start timer on mount
   useEffect(() => {
-    startTimer();
-    return () => clearInterval(timerRef.current);
-  }, [startTimer]);
+    if (slides.length < 2) return undefined;
+    const timer = setInterval(() => {
+      setIndex((current) => (current + 1) % slides.length);
+    }, INTERVAL);
+    return () => clearInterval(timer);
+  }, [slides.length]);
 
-  const handleTransitionEnd = useCallback(() => {
-    if (index === slides.length) {
-      clearInterval(timerRef.current); 
-      setAnimated(false);             
-      setIndex(0);                     
-    }
-  }, [index]);
-
-  useEffect(() => {
-    if (!animated) {
-      const id = requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          setAnimated(true);
-          startTimer(); 
-        })
-      );
-      return () => cancelAnimationFrame(id);
-    }
-  }, [animated, startTimer]);
-
-  // ── Manual navigation
-  const goTo = useCallback((realIdx) => {
-    setAnimated(true);
-    setIndex(realIdx);
-    startTimer();
-  }, [startTimer]);
-
-  const next = useCallback(() => {
-    setAnimated(true);
-    setIndex((i) => i + 1);
-    startTimer();
-  }, [startTimer]);
-
-  const prev = useCallback(() => {
-    setAnimated(true);
-    setIndex((i) => (i <= 0 ? slides.length - 1 : i - 1));
-    startTimer();
-  }, [startTimer]);
+  const current = slides.length > 0 ? index % slides.length : 0;
+  const next = () => setIndex((currentIndex) => (currentIndex + 1) % slides.length);
+  const prev = () => setIndex((currentIndex) => (currentIndex - 1 + slides.length) % slides.length);
 
   return (
     <section className="relative w-full bg-white" aria-label="Hero banner">
 
-      <div className="relative w-full" style={{ aspectRatio: "16/5", minHeight: "200px" }}>
+      <div
+        className={`relative w-full ${slides.length === 0 ? "hidden" : ""}`}
+        style={{ aspectRatio: "16/5", minHeight: "200px" }}
+      >
 
         <div className="absolute inset-0 overflow-hidden">
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent z-[1]" />
 
-          {/* Flex track */}
-          <div
-            className="flex h-full"
-            style={{
-              transform: `translateX(-${index * 100}%)`,
-              transition: animated ? "transform 700ms cubic-bezier(0.25, 0.46, 0.45, 0.94)" : "none",
-            }}
-            onTransitionEnd={handleTransitionEnd}
-          >
-            {track.map((slide, i) => (
-              <div key={i} className="flex-shrink-0 w-full h-full">
-                <img
-                  src={slide.src}
-                  alt={slide.alt}
-                  className="w-full h-full object-cover object-center"
-                />
-              </div>
-            ))}
-          </div>
+          {slides.map((slide, slideIndex) => (
+            <img
+              key={`${slide.src}-${slideIndex}`}
+              src={slide.src}
+              alt={slide.alt}
+              aria-hidden={slideIndex !== current}
+              className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ${slideIndex === current ? "opacity-100" : "opacity-0"}`}
+            />
+          ))}
         </div>
 
 
         {/* Prev button */}
-        <button onClick={prev} aria-label="Previous slide"
-          className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-105">
-          <svg className="w-5 h-5 text-[#C8102E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+        {slides.length > 1 && (
+          <button onClick={prev} aria-label="Previous slide"
+            className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-105">
+            <svg className="w-5 h-5 text-[#C8102E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
 
         {/* Next button */}
-        <button onClick={next} aria-label="Next slide"
-          className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-105">
-          <svg className="w-5 h-5 text-[#C8102E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        {slides.length > 1 && (
+          <button onClick={next} aria-label="Next slide"
+            className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-105">
+            <svg className="w-5 h-5 text-[#C8102E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
 
         {/* Dot indicators */}
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
-          {slides.map((_, i) => (
-            <button key={i} onClick={() => goTo(i)} aria-label={`Go to slide ${i + 1}`}
-              className={`rounded-full transition-all duration-300 ${i === current ? "w-6 h-2.5 bg-[#C8102E]" : "w-2.5 h-2.5 bg-white/60 hover:bg-white"}`} />
-          ))}
-        </div>
+        {slides.length > 1 && (
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
+            {slides.map((_, slideIndex) => (
+              <button key={slideIndex} onClick={() => setIndex(slideIndex)} aria-label={`Go to slide ${slideIndex + 1}`}
+                className={`rounded-full transition-all duration-300 ${slideIndex === current ? "w-6 h-2.5 bg-[#C8102E]" : "w-2.5 h-2.5 bg-white/60 hover:bg-white"}`} />
+            ))}
+          </div>
+        )}
 
       </div>
 
