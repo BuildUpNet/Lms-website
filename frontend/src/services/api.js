@@ -58,16 +58,17 @@ export const studentAPI = {
 };
 
 export const teacherAPI = {
+  getPublic: () => apiFetch('/teachers/public'),
   getAll: () => apiFetch('/teachers'),
   create: (data) =>
     apiFetch('/teachers', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: typeof FormData !== 'undefined' && data instanceof FormData ? data : JSON.stringify(data),
     }),
   update: (id, data) =>
     apiFetch(`/teachers/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: typeof FormData !== 'undefined' && data instanceof FormData ? data : JSON.stringify(data),
     }),
   delete: (id) => apiFetch(`/teachers/${id}`, { method: 'DELETE' }),
 };
@@ -132,6 +133,16 @@ export const heroBannerAPI = {
       body: JSON.stringify({ display_order: displayOrder }),
     }),
   delete: (id) => apiFetch(`/hero-banners/${id}`, { method: 'DELETE' }),
+};
+
+export const resultAPI = {
+  getAll: () => apiFetch('/results'),
+  getMine: () => apiFetch('/results/mine'),
+  upload: (formData) =>
+    apiFetch('/results/upload', {
+      method: 'POST',
+      body: formData,
+    }),
 };
 
 export const studentPortalAPI = {

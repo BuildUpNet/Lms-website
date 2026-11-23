@@ -8,9 +8,10 @@ import Footer from "@/components/Footer";
 import HeroBanner from "@/components/HeroBanner";
 import CourseCard from "@/components/CourseCard";
 import { fallbackCourses } from "@/data/publicCourses";
-import { courseAPI } from "@/services/api";
+import { courseAPI, teacherAPI } from "@/services/api";
 
 /* ─── Data ────────────────────────────────────────────────────── */
+const API_ORIGIN = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/api\/?$/, "");
 
 const categories = [
   {
@@ -80,37 +81,6 @@ const whyUs = [
     icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
     title: "Scholarship Programs",
     desc: "Up to 100% fee waiver for meritorious students. Apply through our annual Lakshya Scholarship Test.",
-  },
-];
-
-const faculty = [
-  {
-    name: "Dr. Rajesh Sharma",
-    subject: "Physics — IIT-JEE & NEET",
-    exp: "18 years",
-    qual: "IIT Delhi, Ph.D.",
-    image: "/images/faculty1.png",
-  },
-  {
-    name: "Prof. Anil Kumar",
-    subject: "Mathematics — IIT-JEE",
-    exp: "15 years",
-    qual: "IIT Bombay, M.Tech",
-    image: "/images/faculty2.png",
-  },
-  {
-    name: "Dr. Priya Verma",
-    subject: "Biology — NEET",
-    exp: "12 years",
-    qual: "AIIMS Delhi, MBBS",
-    image: "/images/faculty3.png",
-  },
-  {
-    name: "Mr. Suresh Gupta",
-    subject: "Chemistry — IIT-JEE & NEET",
-    exp: "14 years",
-    qual: "IIT Kanpur, M.Sc.",
-    image: "/images/faculty4.png",
   },
 ];
 
@@ -235,6 +205,8 @@ export default function Home() {
   const [courses, setCourses] = useState([]);
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [selectedTrack, setSelectedTrack] = useState("iit-jee");
+  const [faculty, setFaculty] = useState([]);
+  const [facultyLoading, setFacultyLoading] = useState(true);
 
   useEffect(() => {
     courseAPI.getPublic()
@@ -247,6 +219,25 @@ export default function Home() {
       .catch(() => setCourses(fallbackCourses))
       .finally(() => setCoursesLoading(false));
   }, []);
+
+  useEffect(() => {
+    teacherAPI.getPublic()
+      .then((response) => {
+        if (!response.success || !Array.isArray(response.data)) {
+          throw new Error(response.message || "Could not load faculty");
+        }
+        setFaculty(response.data);
+      })
+      .catch((error) => {
+        console.error("Failed to load public faculty:", error);
+        setFaculty([]);
+      })
+      .finally(() => setFacultyLoading(false));
+  }, []);
+
+  const facultyCarouselMaxWidth = faculty.length
+    ? `calc(${Array(faculty.length).fill("min(18rem, 82vw) + 1.5rem").join(" + ")})`
+    : undefined;
 
   return (
     <>
@@ -458,53 +449,84 @@ export default function Home() {
                 Meet Our Faculty
               </h2>
               <p className="text-gray-500 mt-4 max-w-xl mx-auto">
-                Learn from IITians, NITians, and medical professionals who have dedicated their careers to shaping India's top rankers.
+                Meet the educators who guide our students through focused preparation and academic growth.
               </p>
             </div>
 
-            <div
-              className="faculty-carousel overflow-hidden py-2"
-              role="region"
-              aria-roledescription="carousel"
-              aria-label="Meet Our Faculty"
-              tabIndex={0}
-            >
-              <div className="faculty-carousel-track">
-                {[0, 1].map((copy) => (
-                  <div
-                    key={`faculty-set-${copy}`}
-                    className="flex shrink-0 items-stretch gap-6 pr-6"
-                    aria-hidden={copy === 1}
-                  >
-                    {faculty.map(({ name, subject, exp, qual, image }) => (
-                      <div
-                        key={`${name}-${copy}`}
-                        className="w-72 max-w-[82vw] shrink-0 bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm card-hover text-center group"
-                      >
-                        <div className="relative h-44 overflow-hidden bg-gray-100">
-                          <Image
-                            src={image}
-                            alt={name}
-                            fill
-                            sizes="(min-width: 1024px) 280px, 82vw"
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        </div>
-                        <div className="px-5 pb-6 pt-4">
-                          <h3 className="font-bold text-[#1a1a2e] text-base">{name}</h3>
-                          <p className="text-xs text-[#C8102E] font-semibold mt-0.5">{subject}</p>
-                          <p className="text-xs text-gray-500 mt-1">{qual}</p>
-                          <div className="mt-3 inline-flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full text-xs text-gray-600 font-medium">
-                            <svg className="w-3 h-3 text-[#C8102E]" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                            </svg>
-                            {exp} Experience
+            <div className="rounded-3xl border border-gray-100 bg-gradient-to-b from-[#f7f8fc] to-white p-3 shadow-inner sm:p-5">
+              <div
+                className="faculty-carousel relative mx-auto w-full overflow-hidden rounded-2xl px-2 py-5 sm:px-3 sm:py-6"
+                style={{ maxWidth: facultyCarouselMaxWidth }}
+                role="region"
+                aria-roledescription="carousel"
+                aria-label="Meet Our Faculty"
+                tabIndex={0}
+              >
+              {faculty.length > 0 ? (
+                <div className="faculty-carousel-track">
+                  {[0, 1].map((copy) => (
+                    <div
+                      key={`faculty-set-${copy}`}
+                      className="flex shrink-0 items-stretch gap-6 pr-6"
+                      aria-hidden={copy === 1}
+                    >
+                      {faculty.map((teacher) => {
+                        const name = [teacher.first_name, teacher.last_name].filter(Boolean).join(" ");
+                        const image = teacher.profile_image
+                          ? (/^https?:\/\//i.test(teacher.profile_image)
+                            ? teacher.profile_image
+                            : `${API_ORIGIN}${teacher.profile_image}`)
+                          : null;
+
+                        return (
+                          <div
+                            key={`${teacher.id}-${copy}`}
+                            className="w-72 max-w-[82vw] shrink-0 overflow-hidden rounded-2xl border border-white bg-white text-center shadow-[0_10px_28px_rgba(26,26,46,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(26,26,46,0.16)] group"
+                          >
+                            <div className="relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                              {image ? (
+                                <Image
+                                  src={image}
+                                  alt={name}
+                                  fill
+                                  sizes="(min-width: 1024px) 280px, 82vw"
+                                  unoptimized
+                                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                              ) : (
+                                <span className="text-4xl font-extrabold text-[#C8102E]/50" aria-hidden="true">
+                                  {name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2)}
+                                </span>
+                              )}
+                              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#1a1a2e]/20 to-transparent" />
+                            </div>
+                            <div className="px-5 pb-6 pt-4">
+                              <h3 className="font-bold text-[#1a1a2e] text-base">{name}</h3>
+                              {teacher.specialization && (
+                                <p className="mt-1 text-xs font-semibold text-[#C8102E]">{teacher.specialization}</p>
+                              )}
+                              {teacher.years_experience != null && (
+                                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-gray-700">
+                                  <svg className="w-3 h-3 text-[#C8102E]" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                  </svg>
+                                  {teacher.years_experience} {Number(teacher.years_experience) === 1 ? "year" : "years"} Experience
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ))}
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="py-10 text-center text-sm text-gray-500">
+                  {facultyLoading ? "Loading faculty..." : "Faculty profiles will be displayed here soon."}
+                </p>
+              )}
+                <span className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-[#f7f8fc] to-transparent sm:w-8" />
+                <span className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-[#f7f8fc] to-transparent sm:w-8" />
               </div>
             </div>
           </div>

@@ -27,6 +27,11 @@ const avatarColors = [
   "bg-purple-500", "bg-teal-500", "bg-orange-500", "bg-pink-500",
 ];
 
+const toDateInput = (value) => {
+  if (!value) return "";
+  return value instanceof Date ? value.toISOString().slice(0, 10) : String(value).split("T")[0];
+};
+
 export default function StudentsPage() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,8 +39,10 @@ export default function StudentsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [showModal, setShowModal] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     fetchStudents();
@@ -60,8 +67,8 @@ export default function StudentsPage() {
   const validate = () => {
     const nextErrors = {};
     if (!form.username.trim()) nextErrors.username = "Required";
-    if (!form.password) nextErrors.password = "Required";
-    else if (form.password.length < 6) nextErrors.password = "Minimum 6 characters";
+    if (!editingStudent && !form.password) nextErrors.password = "Required";
+    else if (form.password && form.password.length < 6) nextErrors.password = "Minimum 6 characters";
     if (!form.admission_number.trim()) nextErrors.admission_number = "Required";
     if (!form.first_name.trim()) nextErrors.first_name = "Required";
     if (form.phone && !/^\d{10,15}$/.test(form.phone)) nextErrors.phone = "Enter 10 to 15 digits";
@@ -70,6 +77,7 @@ export default function StudentsPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setFormError("");
     const nextErrors = validate();
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors);
@@ -78,20 +86,71 @@ export default function StudentsPage() {
 
     setSubmitting(true);
     try {
-      const data = await studentAPI.create(form);
+      const data = editingStudent
+        ? await studentAPI.update(editingStudent.id, form)
+        : await studentAPI.create(form);
       if (data.success) {
         setForm(emptyForm);
         setErrors({});
+        setFormError("");
+        setEditingStudent(null);
         setShowModal(false);
         await fetchStudents();
       } else {
-        console.error("Failed to create student:", data.message || "Unknown API error");
+        const message = data.message || "Unknown API error";
+        const normalizedMessage = message.toLowerCase();
+        const fieldError = [
+          { match: "username already exists", field: "username" },
+          { match: "admission number already exists", field: "admission_number" },
+          { match: "password must be at least", field: "password" },
+          { match: "phone must contain", field: "phone" },
+        ].find(({ match }) => normalizedMessage.includes(match));
+
+        if (fieldError) {
+          setErrors((current) => ({ ...current, [fieldError.field]: message }));
+        } else if (
+          normalizedMessage.includes("required") ||
+          normalizedMessage.includes("invalid student details") ||
+          normalizedMessage.includes("gender must be") ||
+          normalizedMessage.includes("status must be")
+        ) {
+          setFormError(message);
+        } else {
+          console.error("Failed to save student:", message);
+        }
       }
     } catch (error) {
-      console.error("Failed to create student:", error);
+      console.error("Failed to save student:", error);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEdit = (student) => {
+    setEditingStudent(student);
+    setForm({
+      ...emptyForm,
+      username: student.username || "",
+      admission_number: student.admission_number || "",
+      first_name: student.first_name || "",
+      last_name: student.last_name || "",
+      date_of_birth: toDateInput(student.date_of_birth),
+      gender: student.gender || "",
+      phone: student.phone || "",
+      address: student.address || "",
+      admission_date: toDateInput(student.admission_date),
+      status: student.status || "active",
+    });
+    setErrors({});
+    setFormError("");
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingStudent(null);
+    setFormError("");
+    setErrors({});
   };
 
   const handleDelete = async (studentId) => {
@@ -126,7 +185,13 @@ export default function StudentsPage() {
           <p className="text-sm text-gray-500">{filtered.length} of {students.length} students</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setEditingStudent(null);
+            setForm(emptyForm);
+            setErrors({});
+            setFormError("");
+            setShowModal(true);
+          }}
           className="flex items-center gap-2 self-start rounded-xl bg-[#C8102E] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#a50d25] sm:self-auto"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -186,7 +251,7 @@ export default function StudentsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-[#f7f8fc]">
-                  {["#", "Admission No.", "Student", "Username", "Phone", "Date of Birth", "Admission Date", "Status", "Actions"].map((heading) => (
+                  {["Id", "Admission No.", "Student", "Username", "Phone", "Date of Birth", "Admission Date", "Status", "Actions"].map((heading) => (
                     <th key={heading} className="whitespace-nowrap px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">{heading}</th>
                   ))}
                 </tr>
@@ -212,16 +277,28 @@ export default function StudentsPage() {
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusColor[student.status] || statusColor.inactive}`}>{student.status}</span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <button
-                        onClick={() => handleDelete(student.id)}
-                        className="rounded-lg p-1.5 text-red-500 transition-colors hover:bg-red-50"
-                        title="Delete"
-                        aria-label={`Delete ${student.first_name} ${student.last_name || ""}`}
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleEdit(student)}
+                          className="rounded-lg p-1.5 text-blue-600 transition-colors hover:bg-blue-50"
+                          title="Edit"
+                          aria-label={`Edit ${student.first_name} ${student.last_name || ""}`}
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.687a2.121 2.121 0 013 3l-1.687 1.687M16.862 4.487L8.3 13.05a4 4 0 00-1.03 1.73L6.5 17.5l2.72-.77a4 4 0 001.73-1.03l8.562-8.562M16.862 4.487l3 3M19 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(student.id)}
+                          className="rounded-lg p-1.5 text-red-500 transition-colors hover:bg-red-50"
+                          title="Delete"
+                          aria-label={`Delete ${student.first_name} ${student.last_name || ""}`}
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -238,11 +315,11 @@ export default function StudentsPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowModal(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={closeModal}>
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-extrabold text-[#1a1a2e]">Add Student</h2>
-              <button onClick={() => setShowModal(false)} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100" aria-label="Close dialog">
+              <h2 className="text-lg font-extrabold text-[#1a1a2e]">{editingStudent ? "Edit Student" : "Add Student"}</h2>
+              <button onClick={closeModal} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100" aria-label="Close dialog">
                 <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -250,20 +327,29 @@ export default function StudentsPage() {
             </div>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
+              {formError && (
+                <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                  {formError}
+                </p>
+              )}
               <div className="rounded-xl bg-[#f7f8fc] p-3">
                 <p className="mb-2 text-xs font-semibold text-gray-600">Login Credentials</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {[
                     { label: "Username", name: "username", type: "text", required: true },
-                    { label: "Password", name: "password", type: "password", required: true },
-                  ].map(({ label, name, type }) => (
+                    { label: "Password", name: "password", type: "password", required: !editingStudent },
+                  ].map(({ label, name, type, required }) => (
                     <div key={name}>
-                      <label className="mb-1 block text-xs font-semibold text-gray-600">{label}<span className="ml-0.5 text-[#C8102E]">*</span></label>
+                      <label className="mb-1 block text-xs font-semibold text-gray-600">
+                        {label}{required && <span className="ml-0.5 text-[#C8102E]">*</span>}
+                      </label>
                       <input
                         type={type}
                         value={form[name]}
+                        required={required}
+                        placeholder={name === "password" && editingStudent ? "Leave blank to keep current password" : ""}
                         autoComplete="new-password"
-                        onChange={(event) => { setForm((current) => ({ ...current, [name]: event.target.value })); setErrors((current) => ({ ...current, [name]: "" })); }}
+                        onChange={(event) => { setForm((current) => ({ ...current, [name]: event.target.value })); setErrors((current) => ({ ...current, [name]: "" })); setFormError(""); }}
                         className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]/10 ${errors[name] ? "border-red-400" : "border-gray-200 focus:border-[#C8102E]"}`}
                       />
                       {errors[name] && <p className="mt-0.5 text-xs text-red-500">{errors[name]}</p>}
@@ -292,6 +378,7 @@ export default function StudentsPage() {
                         const value = name === "phone" ? event.target.value.replace(/\D/g, "").slice(0, 15) : event.target.value;
                         setForm((current) => ({ ...current, [name]: value }));
                         setErrors((current) => ({ ...current, [name]: "" }));
+                        setFormError("");
                       }}
                       className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]/10 ${errors[name] ? "border-red-400" : "border-gray-200 focus:border-[#C8102E]"}`}
                     />
@@ -325,11 +412,11 @@ export default function StudentsPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)}
+              <button type="button" onClick={closeModal}
                   className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50">Cancel</button>
                 <button type="submit" disabled={submitting}
                   className="flex-1 rounded-xl bg-[#C8102E] py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#a50d25] disabled:cursor-not-allowed disabled:opacity-60">
-                  {submitting ? "Saving..." : "Add Student"}
+                {submitting ? "Saving..." : editingStudent ? "Save Changes" : "Add Student"}
                 </button>
               </div>
             </form>

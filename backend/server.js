@@ -12,6 +12,7 @@ import courseRoutes  from "./routes/courseRoutes.js";
 import galleryRoutes from "./routes/galleryRoutes.js";
 import heroBannerRoutes from "./routes/heroBannerRoutes.js";
 import studentPortalRoutes from "./routes/studentPortalRoutes.js";
+import resultRoutes from "./routes/resultRoutes.js"
 
 dotenv.config();
 connectDB();
@@ -54,6 +55,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/hero-banners", heroBannerRoutes);
 app.use("/api/student-portal", studentPortalRoutes);
+app.use("/api/results",resultRoutes);
 
 app.get("/", (req, res) => {
     res.send("Lakshya LMS Backend is running!");
@@ -63,3 +65,4 @@ const PORT = process.env.PORT;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+

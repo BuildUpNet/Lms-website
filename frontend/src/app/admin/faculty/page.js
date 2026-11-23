@@ -10,8 +10,8 @@ const statusColor = {
 
 const emptyForm = {
   username: "", password: "", employee_id: "", first_name: "", last_name: "",
-  phone: "", email: "", qualification: "", specialization: "",
-  joining_date: "", status: "active",
+  phone: "", email: "", specialization: "", joining_date: "", status: "active",
+  years_experience: "",
 };
 
 export default function FacultyPage() {
@@ -21,7 +21,9 @@ export default function FacultyPage() {
   const [apiError, setApiError] = useState("");
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [imageFile, setImageFile] = useState(null);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -46,13 +48,16 @@ export default function FacultyPage() {
 
   const validate = () => {
     const e = {};
-    if (!form.username.trim()) e.username = "Required";
-    if (!form.password.trim()) e.password = "Required";
-    else if (form.password.length < 6) e.password = "Minimum 6 characters";
-    if (!form.employee_id.trim()) e.employee_id = "Required";
+    if (!editingTeacher && !form.username.trim()) e.username = "Required";
+    if (!editingTeacher && !form.password.trim()) e.password = "Required";
+    else if (!editingTeacher && form.password.length < 6) e.password = "Minimum 6 characters";
+    if (!editingTeacher && !form.employee_id.trim()) e.employee_id = "Required";
     if (!form.first_name.trim()) e.first_name = "Required";
     if (!form.phone.trim()) e.phone = "Required";
     else if (!/^\d{10}$/.test(form.phone)) e.phone = "Must be exactly 10 digits";
+    if (form.years_experience && (!/^\d+$/.test(form.years_experience))) {
+      e.years_experience = "Enter a whole number";
+    }
     return e;
   };
 
@@ -64,20 +69,59 @@ export default function FacultyPage() {
     setSubmitting(true);
     setApiError("");
     try {
-      const data = await teacherAPI.create(form);
+      const payload = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        if (key !== "password" || !editingTeacher) payload.append(key, value);
+      });
+      if (imageFile) payload.append("image", imageFile);
+      const data = editingTeacher
+        ? await teacherAPI.update(editingTeacher.id, payload)
+        : await teacherAPI.create(payload);
       if (data.success) {
         setForm(emptyForm);
+        setEditingTeacher(null);
+        setImageFile(null);
         setErrors({});
         setShowModal(false);
-        fetchTeachers();
+        await fetchTeachers();
       } else {
-        setApiError(data.message || "Failed to create teacher");
+        setApiError(data.message || "Failed to save teacher");
       }
     } catch {
       setApiError("Network error. Please try again.");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const openAddForm = () => {
+    setEditingTeacher(null);
+    setForm(emptyForm);
+    setImageFile(null);
+    setErrors({});
+    setApiError("");
+    setShowModal(true);
+  };
+
+  const openEditForm = (teacher) => {
+    setEditingTeacher(teacher);
+    setForm({
+      ...emptyForm,
+      username: teacher.username || "",
+      employee_id: teacher.employee_id || "",
+      first_name: teacher.first_name || "",
+      last_name: teacher.last_name || "",
+      phone: teacher.phone || "",
+      email: teacher.email || "",
+      specialization: teacher.specialization || "",
+      joining_date: teacher.joining_date?.split("T")[0] || "",
+      status: teacher.status || "active",
+      years_experience: teacher.years_experience == null ? "" : String(teacher.years_experience),
+    });
+    setImageFile(null);
+    setErrors({});
+    setApiError("");
+    setShowModal(true);
   };
 
   const handleDelete = async (id) => {
@@ -107,9 +151,9 @@ export default function FacultyPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-extrabold text-[#1a1a2e]">Teachers (Faculty)</h1>
-          <p className="text-sm text-gray-500">{filtered.length} of {teachers.length} teachers</p>
+          <p className="text-sm text-gray-500">{filtered.length} of {teachers.length} teachers · Active faculty appear on the public homepage</p>
         </div>
-        <button onClick={() => { setShowModal(true); setApiError(""); }} className="flex items-center gap-2 px-4 py-2 bg-[#C8102E] text-white text-sm font-bold rounded-xl hover:bg-[#a50d25] transition-colors self-start sm:self-auto">
+        <button onClick={openAddForm} className="flex items-center gap-2 px-4 py-2 bg-[#C8102E] text-white text-sm font-bold rounded-xl hover:bg-[#a50d25] transition-colors self-start sm:self-auto">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
           Add Teacher
         </button>
@@ -134,7 +178,7 @@ export default function FacultyPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-[#f7f8fc] border-b border-gray-100">
-                  {["#", "Emp. ID", "Teacher", "Username", "Phone", "Email", "Qualification", "Specialization", "Joining Date", "Status", "Actions"].map((h) => (
+                  {["#", "Emp. ID", "Teacher", "Username", "Phone", "Email", "Specialization", "Experience", "Joining Date", "Status", "Actions"].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -155,13 +199,16 @@ export default function FacultyPage() {
                     <td className="px-4 py-3.5 text-gray-500 text-xs font-mono">{t.username}</td>
                     <td className="px-4 py-3.5 text-gray-600 text-xs whitespace-nowrap">{t.phone}</td>
                     <td className="px-4 py-3.5 text-gray-600 text-xs">{t.email}</td>
-                    <td className="px-4 py-3.5 text-gray-600 text-xs">{t.qualification}</td>
                     <td className="px-4 py-3.5 text-gray-600 text-xs max-w-[160px] truncate">{t.specialization}</td>
+                    <td className="px-4 py-3.5 text-gray-600 text-xs whitespace-nowrap">{t.years_experience == null ? "—" : `${t.years_experience} years`}</td>
                     <td className="px-4 py-3.5 text-gray-500 text-xs whitespace-nowrap">{t.joining_date?.split("T")[0]}</td>
                     <td className="px-4 py-3.5">
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${statusColor[t.status]}`}>{t.status}</span>
                     </td>
                     <td className="px-4 py-3.5">
+                      <button onClick={() => openEditForm(t)} className="mr-1 p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors" title="Edit faculty details">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a2.121 2.121 0 013 3l-9.193 9.193a4 4 0 01-1.686 1.029l-3.124.893.893-3.124a4 4 0 011.029-1.686l7.394-7.617zM19 7l-9 9" /></svg>
+                      </button>
                       <button onClick={() => handleDelete(t.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors" title="Delete">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
@@ -185,7 +232,7 @@ export default function FacultyPage() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-extrabold text-[#1a1a2e]">Add Teacher</h2>
+              <h2 className="text-lg font-extrabold text-[#1a1a2e]">{editingTeacher ? "Edit Faculty Details" : "Add Teacher"}</h2>
               <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
@@ -196,23 +243,25 @@ export default function FacultyPage() {
             )}
 
             <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="bg-[#f7f8fc] rounded-xl p-3">
-                <p className="text-xs font-semibold text-gray-600 mb-2">Login Credentials</p>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: "Username", name: "username", type: "text", placeholder: "rajesh_sharma" },
-                    { label: "Password", name: "password", type: "password", placeholder: "Min 6 characters" },
-                  ].map(({ label, name, type, placeholder }) => (
-                    <div key={name}>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">{label}<span className="text-[#C8102E] ml-0.5">*</span></label>
-                      <input type={type} placeholder={placeholder} value={form[name]}
-                        onChange={(e) => { setForm((p) => ({ ...p, [name]: e.target.value })); setErrors((p) => ({ ...p, [name]: "" })); }}
-                        className={`w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8102E]/10 ${errors[name] ? "border-red-400" : "border-gray-200 focus:border-[#C8102E]"}`} />
-                      {errors[name] && <p className="text-xs text-red-500 mt-0.5">{errors[name]}</p>}
-                    </div>
-                  ))}
+              {!editingTeacher && (
+                <div className="bg-[#f7f8fc] rounded-xl p-3">
+                  <p className="text-xs font-semibold text-gray-600 mb-2">Login Credentials</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Username", name: "username", type: "text", placeholder: "rajesh_sharma" },
+                      { label: "Password", name: "password", type: "password", placeholder: "Min 6 characters" },
+                    ].map(({ label, name, type, placeholder }) => (
+                      <div key={name}>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">{label}<span className="text-[#C8102E] ml-0.5">*</span></label>
+                        <input type={type} placeholder={placeholder} value={form[name]}
+                          onChange={(e) => { setForm((p) => ({ ...p, [name]: e.target.value })); setErrors((p) => ({ ...p, [name]: "" })); }}
+                          className={`w-full px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C8102E]/10 ${errors[name] ? "border-red-400" : "border-gray-200 focus:border-[#C8102E]"}`} />
+                        {errors[name] && <p className="text-xs text-red-500 mt-0.5">{errors[name]}</p>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: "Employee ID", name: "employee_id", type: "text", placeholder: "TCH-001" },
@@ -220,12 +269,12 @@ export default function FacultyPage() {
                   { label: "Last Name", name: "last_name", type: "text", placeholder: "Sharma" },
                   { label: "Phone", name: "phone", type: "text", placeholder: "9876543210" },
                   { label: "Email", name: "email", type: "email", placeholder: "rajesh@lakshya.ac.in" },
-                  { label: "Qualification", name: "qualification", type: "text", placeholder: "Ph.D. Physics" },
                   { label: "Joining Date", name: "joining_date", type: "date" },
+                  { label: "Years of Experience", name: "years_experience", type: "number", placeholder: "e.g. 10" },
                 ].map(({ label, name, type, placeholder }) => (
                   <div key={name}>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">{label}{["employee_id","first_name","phone"].includes(name) && <span className="text-[#C8102E] ml-0.5">*</span>}</label>
-                    <input type={type} placeholder={placeholder} value={form[name]}
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">{label}{["employee_id","first_name","phone"].includes(name) && !editingTeacher && <span className="text-[#C8102E] ml-0.5">*</span>}</label>
+                    <input type={type} placeholder={placeholder} value={form[name]} min={name === "years_experience" ? 0 : undefined} step={name === "years_experience" ? 1 : undefined} disabled={name === "employee_id" && Boolean(editingTeacher)}
                       onChange={(e) => {
                         const val = name === "phone" ? e.target.value.replace(/\D/g, "").slice(0, 10) : e.target.value;
                         setForm((p) => ({ ...p, [name]: val })); setErrors((p) => ({ ...p, [name]: "" }));
@@ -234,6 +283,20 @@ export default function FacultyPage() {
                     {errors[name] && <p className="text-xs text-red-500 mt-0.5">{errors[name]}</p>}
                   </div>
                 ))}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Profile Photo</label>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(event) => setImageFile(event.target.files?.[0] || null)}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  {editingTeacher?.profile_image && !imageFile
+                    ? "Current photo will remain unless you choose a new one."
+                    : "Optional. JPG, PNG, or WEBP, up to 5 MB."}
+                </p>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Specialization</label>
@@ -254,7 +317,7 @@ export default function FacultyPage() {
                   className="flex-1 py-2.5 border border-gray-200 text-sm font-semibold text-gray-600 rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
                 <button type="submit" disabled={submitting}
                   className="flex-1 py-2.5 bg-[#C8102E] text-white text-sm font-bold rounded-xl hover:bg-[#a50d25] transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
-                  {submitting ? "Saving..." : "Add Teacher"}
+                  {submitting ? "Saving..." : editingTeacher ? "Save Changes" : "Add Teacher"}
                 </button>
               </div>
             </form>
