@@ -463,7 +463,10 @@ export default function Home() {
                 tabIndex={0}
               >
               {faculty.length > 0 ? (
-                <div className="faculty-carousel-track">
+                <div
+                  className="faculty-carousel-track"
+                  style={{ animationDuration: `${faculty.length * 9}s` }}
+                >
                   {[0, 1].map((copy) => (
                     <div
                       key={`faculty-set-${copy}`}
