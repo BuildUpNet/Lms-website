@@ -15,7 +15,7 @@ import studentPortalRoutes from "./routes/studentPortalRoutes.js";
 import resultRoutes from "./routes/resultRoutes.js"
 
 dotenv.config();
-connectDB();
+if (!process.env.VERCEL) connectDB();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
